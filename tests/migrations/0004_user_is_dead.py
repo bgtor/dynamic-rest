@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='is_dead',
-            field=models.NullBooleanField(default=False),
+            field=models.BooleanField(null=True, blank=True, default=False),
         ),
     ]
