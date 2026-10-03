@@ -87,11 +87,13 @@ def get_directory(request):
 def modify_list_route(routes):
     # Identify the list route, add PATCH so we can
     # have bulk PATCH requests
-    if not settings.ENABLE_BULK_UPDATE:
-        return
-    list_route = next(i for i in routes if i.name == '{basename}-list')
-    list_route.mapping['patch'] = 'partial_update'
-    list_route.mapping['delete'] = 'destroy'
+    if settings.ENABLE_BULK_UPDATE or settings.ENABLE_BULK_DELETE:
+        list_route = next(i for i in routes if i.name == '{basename}-list')
+
+    if settings.ENABLE_BULK_UPDATE:
+        list_route.mapping['patch'] = 'partial_update'
+    if settings.ENABLE_BULK_DELETE:
+        list_route.mapping['delete'] = 'destroy'
 
 
 class DynamicRouter(DefaultRouter):

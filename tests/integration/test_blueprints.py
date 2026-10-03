@@ -5,11 +5,6 @@ import time
 import json
 import os
 
-try:
-    from djay.test import TemporaryApplication
-except ImportError:
-    from dj.test import TemporaryApplication
-
 
 class DJBlueprintsTestCase(TestCase):
 
@@ -18,6 +13,12 @@ class DJBlueprintsTestCase(TestCase):
         'Integration tests disabled'
     )
     def test_blueprints(self):
+
+        try:
+            from djay.test import TemporaryApplication
+        except ImportError:
+            from dj.test import TemporaryApplication
+
         params = {
             "app": "dummy",
             "description": "dummy",

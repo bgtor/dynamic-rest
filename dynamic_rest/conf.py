@@ -32,6 +32,9 @@ DYNAMIC_REST = {
     # ENABLE_BULK_UPDATE: enable/disable update in bulk
     'ENABLE_BULK_UPDATE': True,
 
+    # ENABLE_BULK_DELETE: enable/disable delete in bulk
+    'ENABLE_BULK_DELETE': True,
+
     # ENABLE_PATCH_ALL: enable/disable patch by queryset
     'ENABLE_PATCH_ALL': False,
 
