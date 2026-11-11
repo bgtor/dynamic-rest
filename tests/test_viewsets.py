@@ -133,21 +133,83 @@ class TestUserViewSet(TestCase):
         expected = DynamicFilterBackend().get_schema_operation_parameters(
             self.view
         )
-        self.assertEqual(len(expected), 1)
+        self.assertEqual(len(expected), 3)
         self.assertEqual(expected[0]['name'], self.view.FILTER)
         self.assertEqual(expected[0]['in'], 'query')
         self.assertFalse(expected[0]['required'])
-        self.assertEqual(expected[0]['schema']['type'], 'object')
+        schema = expected[0]['schema']
+        self.assertEqual(schema['type'], 'object')
         self.assertEqual(
-            expected[0]['schema']['additionalProperties'],
-            {'type': 'string'},
+            schema['additionalProperties'],
+            {},
         )
+        self.assertNotIn('content', expected[0])
         self.assertEqual(
             FastDynamicFilterBackend().get_schema_operation_parameters(
                 self.view
             ),
             expected,
         )
+
+    def test_filter_schema_uses_view_parameter_name(self):
+        self.view.FILTER = 'where{}'
+        parameters = DynamicFilterBackend().get_schema_operation_parameters(
+            self.view
+        )
+        self.assertEqual(parameters[0]['name'], 'where{}')
+
+    def test_field_selection_schema_operation_parameters(self):
+        for backend in (DynamicFilterBackend(), FastDynamicFilterBackend()):
+            parameters = backend.get_schema_operation_parameters(self.view)
+            for name in (self.view.INCLUDE, self.view.EXCLUDE):
+                parameter = next(p for p in parameters if p['name'] == name)
+                self.assertEqual(parameter['in'], 'query')
+                self.assertFalse(parameter['required'])
+                self.assertEqual(
+                    parameter['schema'],
+                    {'type': 'array', 'items': {'type': 'string'}},
+                )
+                self.assertEqual(parameter['style'], 'form')
+                self.assertTrue(parameter['explode'])
+                self.assertTrue(parameter['description'])
+
+    def test_field_selection_schema_respects_features_and_names(self):
+        self.view.INCLUDE = 'fields[]'
+        self.view.EXCLUDE = 'omit[]'
+        for enabled, expected in (
+            ((), []),
+            ((self.view.INCLUDE,), [self.view.INCLUDE]),
+            ((self.view.EXCLUDE,), [self.view.EXCLUDE]),
+            ((self.view.INCLUDE, self.view.EXCLUDE),
+             [self.view.INCLUDE, self.view.EXCLUDE]),
+        ):
+            self.view.features = enabled
+            parameters = DynamicFilterBackend().get_schema_operation_parameters(
+                self.view
+            )
+            self.assertEqual(
+                [p['name'] for p in parameters],
+                [self.view.FILTER] + expected,
+            )
+
+    def test_filter_parameters_in_openapi_schema(self):
+        parameters = self.view.schema.get_filter_parameters('/users/', 'GET')
+        filter_parameter = next(
+            parameter for parameter in parameters
+            if parameter['name'] == self.view.FILTER
+        )
+        self.assertEqual(
+            filter_parameter['schema'],
+            {'type': 'object', 'additionalProperties': {}},
+        )
+
+    def test_field_selection_parameters_in_openapi_schema(self):
+        for action, path in (('list', '/users/'), ('retrieve', '/users/{id}/')):
+            self.view.action = action
+            parameters = self.view.schema.get_filter_parameters(path, 'GET')
+            names = [parameter['name'] for parameter in parameters]
+            self.assertEqual(names.count(self.view.INCLUDE), 1)
+            self.assertEqual(names.count(self.view.EXCLUDE), 1)
 
     def test_sort_schema_operation_parameters(self):
         parameters = DynamicSortingFilter().get_schema_operation_parameters(

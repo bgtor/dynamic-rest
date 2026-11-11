@@ -226,7 +226,7 @@ class DynamicFilterBackend(BaseFilterBackend):
     )
 
     def get_schema_operation_parameters(self, view):
-        return [
+        parameters = [
             {
                 'name': view.FILTER,
                 'required': False,
@@ -243,6 +243,32 @@ class DynamicFilterBackend(BaseFilterBackend):
                 },
             },
         ]
+        for feature, description in (
+            (
+                view.INCLUDE,
+                'Fields and relationships to include. Repeat for multiple '
+                'fields; nested fields use dot notation.',
+            ),
+            (
+                view.EXCLUDE,
+                'Fields and relationships to exclude. Repeat for multiple '
+                'fields; nested fields use dot notation.',
+            ),
+        ):
+            if feature in view.features:
+                parameters.append({
+                    'name': feature,
+                    'required': False,
+                    'in': 'query',
+                    'description': description,
+                    'schema': {
+                        'type': 'array',
+                        'items': {'type': 'string'},
+                    },
+                    'style': 'form',
+                    'explode': True,
+                })
+        return parameters
 
     def filter_queryset(self, request, queryset, view):
         """Filter the queryset.

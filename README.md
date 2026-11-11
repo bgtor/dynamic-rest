@@ -385,6 +385,9 @@ For example, if the user had a deferred "events" relationship, passing `include[
 
 Just as deferred fields can be included on demand with the `include[]` feature, fields that are not deferred can be excluded with the `exclude[]` feature. Like `include[]`, `exclude[]` also supports multiple values and dot notation to allow you to exclude fields on sideloaded relationships.
 
+When enabled, these features appear in the OpenAPI filter backend schema as
+optional arrays of strings. Repeat the query parameter for each field.
+
 For example, if we want to fetch a user with his groups, but ignore the groups' location and user's location, we could make a request like this:
 
 ```
