@@ -234,13 +234,12 @@ class DynamicFilterBackend(BaseFilterBackend):
                 'description': (
                     'Filter by field names, optionally followed by an '
                     'operator. Use `filter{field[.operator]}` parameters; '
-                    'prefix a field with `-` to exclude it.'
+                    'prefix a field with `-` to exclude it. The `filter{}` '
+                    'parameter also accepts a JSON-encoded filter object.'
                 ),
                 'schema': {
                     'type': 'object',
-                    'additionalProperties': {
-                        'type': 'string',
-                    },
+                    'additionalProperties': {},
                 },
             },
         ]

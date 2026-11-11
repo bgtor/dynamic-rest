@@ -433,6 +433,21 @@ class TestUsersAPI(APITestCase):
             },
             json.loads(response.content.decode('utf-8')))
 
+    def test_get_with_json_filter(self):
+        cases = [
+            ({'name': '1'}, [2]),
+            ({'name.in': ['1', '2']}, [2, 3]),
+            ({'-name': '1', 'location': 1}, [1]),
+            ({'location.name': '1'}, [3]),
+        ]
+        for filters, expected_ids in cases:
+            response = self.client.get('/users/', {
+                'filter{}': json.dumps(filters),
+            })
+            self.assertEqual(response.status_code, 200)
+            users = json.loads(response.content.decode('utf-8'))['users']
+            self.assertEqual([user['id'] for user in users], expected_ids)
+
     def test_get_with_filter_exclude(self):
         url = '/users/?filter{-name}=1'
         with self.assertNumQueries(1):

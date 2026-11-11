@@ -530,6 +530,31 @@ The sky is the limit! DREST supports just about every basic filtering scenario a
 
 See the [full list here](dynamic_rest/filters.py#L153-L176).
 
+The `filter{}` query parameter also accepts a URL-encoded JSON object.
+For example, `filter{}={"name":"John"}` is equivalent to
+`filter{name}=John`. JSON values may be strings, numbers, booleans, null,
+or arrays for operators such as `in`. Nested `.and` and `.or` arrays combine
+filter objects:
+
+```json
+{".or": [{"name": "John"}, {"name.in": ["Jane", "Joe"]}]}
+```
+
+For example, build the query string in JavaScript with:
+
+```js
+const params = new URLSearchParams({
+    'filter{}': JSON.stringify({name: 'John'}),
+});
+```
+
+The OpenAPI schema exposes `filter{}` as an object with unrestricted values.
+Ensure the client serializes it as JSON or generates individual
+`filter{field}` query parameters; generic exploded object parameters do not
+match the server's filter syntax. JSON filters apply to the root queryset; use
+the individual parameter form for sideload filters such as
+`filter{groups|name}=Home`.
+
 ## Ordering
 
 You can use the `sort[]` feature to order your response by one or more fields. Dot notation is supported for sorting by nested properties:
