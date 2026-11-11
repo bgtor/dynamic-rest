@@ -5,7 +5,12 @@ from django.test.client import RequestFactory
 from rest_framework import exceptions, status
 from rest_framework.request import Request
 
-from dynamic_rest.filters import DynamicFilterBackend, FilterNode
+from dynamic_rest.filters import (
+    DynamicFilterBackend,
+    DynamicSortingFilter,
+    FastDynamicFilterBackend,
+    FilterNode,
+)
 from tests.models import Dog, Group, User
 from tests.serializers import GroupSerializer
 from tests.setup import create_fixture
@@ -123,6 +128,42 @@ class TestUserViewSet(TestCase):
         gs = GroupSerializer(include_fields='*')
         filter_key, field = node.generate_query_key(gs)
         self.assertEqual(filter_key, 'users__id__in')
+
+    def test_filter_schema_operation_parameters(self):
+        expected = DynamicFilterBackend().get_schema_operation_parameters(
+            self.view
+        )
+        self.assertEqual(len(expected), 1)
+        self.assertEqual(expected[0]['name'], self.view.FILTER)
+        self.assertEqual(expected[0]['in'], 'query')
+        self.assertFalse(expected[0]['required'])
+        self.assertEqual(expected[0]['schema']['type'], 'object')
+        self.assertEqual(
+            expected[0]['schema']['additionalProperties'],
+            {'type': 'string'},
+        )
+        self.assertEqual(
+            FastDynamicFilterBackend().get_schema_operation_parameters(
+                self.view
+            ),
+            expected,
+        )
+
+    def test_sort_schema_operation_parameters(self):
+        parameters = DynamicSortingFilter().get_schema_operation_parameters(
+            self.view
+        )
+        self.assertEqual(len(parameters), 1)
+        self.assertEqual(parameters[0]['name'], self.view.SORT)
+        self.assertEqual(parameters[0]['in'], 'query')
+        self.assertFalse(parameters[0]['required'])
+        self.assertEqual(parameters[0]['schema']['type'], 'array')
+        self.assertEqual(
+            parameters[0]['schema']['items'],
+            {'type': 'string'},
+        )
+        self.assertEqual(parameters[0]['style'], 'form')
+        self.assertTrue(parameters[0]['explode'])
 
 
 class TestMergeDictConvertsToDict(TestCase):

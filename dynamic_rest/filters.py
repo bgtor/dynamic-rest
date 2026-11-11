@@ -225,6 +225,26 @@ class DynamicFilterBackend(BaseFilterBackend):
         None,
     )
 
+    def get_schema_operation_parameters(self, view):
+        return [
+            {
+                'name': view.FILTER,
+                'required': False,
+                'in': 'query',
+                'description': (
+                    'Filter by field names, optionally followed by an '
+                    'operator. Use `filter{field[.operator]}` parameters; '
+                    'prefix a field with `-` to exclude it.'
+                ),
+                'schema': {
+                    'type': 'object',
+                    'additionalProperties': {
+                        'type': 'string',
+                    },
+                },
+            },
+        ]
+
     def filter_queryset(self, request, queryset, view):
         """Filter the queryset.
 
@@ -668,6 +688,28 @@ class DynamicSortingFilter(OrderingFilter):
 
     This class adds support for multi-field ordering and rewritten fields.
     """
+
+    def get_schema_operation_parameters(self, view):
+        return [
+            {
+                'name': view.SORT,
+                'required': False,
+                'in': 'query',
+                'description': (
+                    'Fields to sort by. Repeat the parameter to sort by '
+                    'multiple fields; prefix a field with `-` for descending '
+                    'order.'
+                ),
+                'schema': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                    },
+                },
+                'style': 'form',
+                'explode': True,
+            },
+        ]
 
     def filter_queryset(self, request, queryset, view):
         """"Filter the queryset, applying the ordering.
